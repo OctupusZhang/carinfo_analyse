@@ -8,12 +8,15 @@ chardet==3.0.4
 constantly==15.1.0
 cryptography==2.7
 cssselect==1.0.3
+cycler==0.10.0
 fake-useragent==0.1.11
 get==2019.4.13
 hyperlink==19.0.0
 idna==2.8
 incremental==17.5.0
+kiwisolver==1.1.0
 lxml==4.3.3
+matplotlib==3.1.1
 mongoengine==0.17.0
 numpy==1.17.0
 pandas==0.25.0
@@ -29,6 +32,7 @@ PyHamcrest==1.9.0
 pymongo==3.8.0
 PyMySQL==0.9.3
 pyOpenSSL==19.0.0
+pyparsing==2.4.2
 python-dateutil==2.8.0
 pytz==2019.2
 pywin32==224
