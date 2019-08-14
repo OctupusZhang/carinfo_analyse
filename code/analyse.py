@@ -1,4 +1,7 @@
+import re
+
 import pandas as pd
+import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 
@@ -66,10 +69,8 @@ def draw_year_price():
     car_series_list = df['车系'].value_counts().head().index
     year_list = df['上牌时间'].value_counts().index.sort_values()
     df_year_price = df[['上牌时间', '价格', '车系']]
-    df_year_price = df_year_price.copy()
-    df_p = df['价格'].map(lambda x: float(x.strip('万')))
-    df_year_price['价格'] = df_p
-    df_year_price = df_year_price.set_index(['车系', '上牌时间'])
+    df_year_price = df_year_price.set_index(['车系', '上牌时间']).applymap(lambda x: float(x.strip('万')))
+
     ave_price_list = []
     for i in car_series_list:
         temp = []
@@ -80,20 +81,58 @@ def draw_year_price():
                 ave_price = 0
             temp.append(ave_price)
         ave_price_list.append(temp)
+
     df_year_price = pd.DataFrame(ave_price_list, columns=year_list, index=car_series_list).T
-    plt.plot(df_year_price)
-    plt.legend(loc='upper left')
+    df_year_price[df_year_price == 0] = np.nan
+    df_year_price = df_year_price.dropna()   #默认为0是对行操作，1对列操作，与mean，sum函数相反
+    df_year_price.plot()
     plt.savefig('../results/price_year_rel.png')
     plt.clf()
 
 
-
 def draw_distance_price():
-    pass
+    car_type_list = df['品牌'].value_counts().head().index
+    dis_list = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 12, 14, 16]
+    reg = re.compile('\d公里')
+    df_type = df['品牌']
+    df_dis = df['里程'].map(lambda x: (float(x.strip('公里')) / 10000) if reg.findall(x) else float(x.strip('万公里')))
+    df_price = df['价格'].map(lambda x: float(x.strip('万')))
+    df_dis_price = pd.DataFrame(df_type)
+    df_dis_price['里程'] = df_dis
+    df_dis_price['价格'] = df_price
+    df_dis_price = df_dis_price.set_index('品牌')
+
+    ave_price_list = []
+    for i in car_type_list:
+        real_dis_list = []
+        df_temp = df_dis_price.loc[i]
+        tmp_ave_price = []
+        for j in range(len(dis_list)):
+            if j == 0:
+                ave_price = df_temp[df_temp['里程'] < dis_list[j]]['价格'].mean()
+                tmp_ave_price.append(ave_price)
+                label = f'小于{dis_list[j]}万公里'
+                real_dis_list.append(label)
+            if j == len(dis_list) - 1:
+                ave_price = df_temp[df_temp['里程'] >= dis_list[j]]['价格'].mean()
+                tmp_ave_price.append(ave_price)
+                label = f'大于{dis_list[j]}万公里'
+                real_dis_list.append(label)
+                break
+            ave_price = df_temp[(df_temp['里程'] >= dis_list[j]) & (df_temp['里程'] < dis_list[j+1])]['价格'].mean()
+            tmp_ave_price.append(ave_price)
+            label = f'{dis_list[j]}~{dis_list[j+1]}万公里'
+            real_dis_list.append(label)
+        ave_price_list.append(tmp_ave_price)
+
+    df_dis_price = pd.DataFrame(ave_price_list, index=car_type_list, columns=real_dis_list).T
+    df_dis_price.plot(rot=30)
+    plt.savefig('../results/price_dis_rel.png')
+    plt.clf()
 
 
 if __name__ == '__main__':
-    # draw_type_and_series()
-    # draw_price()
+    draw_type_and_series()
+    draw_price()
     draw_year_price()
     draw_distance_price()
